@@ -1,0 +1,14 @@
+---
+description: For change/precision tasks, lead with a code skeleton (file tree + typed signatures) before writing implementation.
+alwaysApply: false
+---
+
+When asked to plan, propose, or implement changes, first use the skeleton-plan skill:
+present a file-tree diff (new/modified/deleted) plus typed signatures and docstrings
+of the functions/classes you'll add or change — edits tagged with before->after
+signatures, bodies left as stubs. Only write full implementations after the skeleton
+is acknowledged. For larger plans, embed it as an inline "## Skeleton" section.
+
+Set `alwaysApply: true` to attach this to every request, or keep it `false` and let
+the description pull it in for relevant tasks. Drop this file in `.cursor/rules/`
+(per-project) or your global Cursor rules.

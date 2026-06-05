@@ -1,0 +1,178 @@
+# skeleton-plan
+
+A Claude Code / Cursor skill that turns "what are you about to change?" into a **code skeleton** instead of a wall of prose: a file-tree diff plus the typed signatures, docstrings, and tagged edits of everything you're adding or changing. Bodies stay stubs — the *shape* is the deliverable.
+
+## Why
+
+- Plans came back formatted a dozen different ways depending on the model and harness, and reading all of it was its own tax.
+- "Reasonable-looking" plans kept turning into over-engineered diffs — assumptions I never agreed to, surfacing only at PR time.
+- Mermaid diagrams are great for *logic*. But what I actually wanted to approve was the **structure**: which functions you're adding or changing, your thinking expressed in types and steps, your logic visible in comments. The exact execution isn't the point — the skeleton is.
+
+It's most useful in two places: small tasks that don't warrant full plan mode but still need precision (touch the *right* things), and large plans where you want a digestible preview *before* it's a 5k-line PR.
+
+## What it produces
+
+A single markdown file (or an inline `## Skeleton` section inside a bigger plan):
+
+1. **File tree** — every path touched, marked `+` new / `~` modified / `-` deleted / `>` moved.
+2. **Per-file skeletons** — for new files, full typed signatures + docstrings; for modified files, **only the changed members**, tagged `# [NEW]`/`# [MODIFIED]`, with a `# was:` line showing the old signature when it changes. Everything untouched is elided.
+3. **Assumptions / open questions** footer.
+
+Two fidelity levels:
+
+| Mode | Bodies | Invoke with |
+|---|---|---|
+| **Default** | `...` (signature + docstring only) | `/skeleton-plan <ask>` |
+| **Logic** | `...` preceded by numbered comment steps sketching the algorithm | `/skeleton-plan --logic <ask>` (or "with logic" / "verbose") |
+
+It **investigates the real codebase first** — every signature, import, and symbol is read from the actual files, not invented — and it **never edits source files**. The output is a doc.
+
+## Install
+
+Clone into your skills directory (the folder name becomes the skill name):
+
+```bash
+# Claude Code
+git clone https://github.com/ishaan-os/skeleton-plan ~/.claude/skills/skeleton-plan
+
+# Cursor (auto-symlinks into ~/.claude/skills on most setups)
+git clone https://github.com/ishaan-os/skeleton-plan ~/.cursor/skills/skeleton-plan
+```
+
+Update later with `git -C ~/.claude/skills/skeleton-plan pull`.
+
+## Using it
+
+**Mid-chat, standalone** — the common case. Drop it into any request:
+
+```
+/skeleton-plan add partial refunds to the orders flow
+```
+
+It investigates, writes `~/.claude/skeleton-plans/<date>/<slug>.md`, restates the path, and offers to open it in plannotator.
+
+**With logic steps** — when you want to verify the algorithm, not just the contract:
+
+```
+/skeleton-plan --logic rework the dedupe pass in the search indexer
+```
+
+**Inside a larger plan** — mention it while the agent is drafting a plan-mode plan, and instead of a separate file it embeds a `## Skeleton` section directly in the plan so you approve the structure alongside the narrative.
+
+## What it looks like in a plan
+
+A normal plan tells you *what* and *why*. The skeleton section shows you the **shape you're approving** — so you catch an unexpected new dependency, a wrong layer, or a signature change *before* the code exists:
+
+````markdown
+## Plan — partial order refunds
+Add Stripe-backed partial/full refunds for paid orders. Synchronous, no queue.
+
+## Skeleton
+
+### File tree
+```
++ app/handlers/refund.py        NEW
+~ app/routes/orders.py          + POST /orders/{id}/refund
+~ app/crud/orders.py            Update.mark_refunded
+- app/handlers/legacy_refund.py DELETE — superseded
+```
+
+### app/handlers/refund.py  (NEW)
+```python
+async def process_refund(
+    order_id: UUID, amount: Decimal, session: AsyncSession,
+) -> RefundResult:
+    """Issue a partial or full refund for a paid order.
+
+    Raises RefundError if amount exceeds the amount already paid.
+    """
+    ...
+```
+
+### app/routes/orders.py  (MODIFIED)
+```python
+# [MODIFIED]
+# was: async def get_order(order_id: UUID) -> OrderResponse:
+async def get_order(order_id: UUID, include_refunds: bool = False) -> OrderResponse:
+    """Fetch an order, optionally embedding its refund history."""
+    ...
+
+# [NEW]
+async def refund_order(order_id: UUID, body: RefundRequest) -> RefundResult:
+    """POST /orders/{id}/refund — delegates to the refund handler."""
+    ...
+```
+
+### Assumptions
+- Refund is synchronous (inline Stripe call), not queued via an actor.
+````
+
+**Why it helps:** the `# was:` line flags the signature change at a glance; the `+`/`~`/`-` tree shows blast radius in four lines; and the docstrings let you sanity-check intent without reading any implementation. A full sample artifact lives in [`examples/refund-skeleton.md`](examples/refund-skeleton.md).
+
+## Stitching it in as a hook
+
+You can make the skeleton a default reflex instead of something you remember to type.
+
+### Claude Code (real hook)
+
+Claude Code's `UserPromptSubmit` hook can inject context the model sees. The script below nudges the agent to produce a skeleton on change-shaped requests — and stays quiet otherwise so it isn't noise on every message.
+
+`~/.claude/hooks/skeleton-nudge.sh` (see [`hooks/claude/skeleton-nudge.sh`](hooks/claude/skeleton-nudge.sh)):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+prompt=$(cat | jq -r '.prompt // ""' | tr '[:upper:]' '[:lower:]')
+
+# Don't double up if the user already invoked the skill.
+case "$prompt" in *skeleton-plan*) exit 0 ;; esac
+
+# Only nudge on change/plan-shaped requests.
+if printf '%s' "$prompt" | grep -Eq '\b(plan|implement|refactor|add|change|build|migrate|rework)\b'; then
+  cat <<'JSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "Before proposing or writing changes, use the skeleton-plan skill: present a structural skeleton (file tree of new/modified/deleted files + typed signatures and docstrings of what you'll add or change, edits tagged with before->after signatures, bodies left as stubs). For larger plan-mode plans, embed it as an inline '## Skeleton' section."
+  }
+}
+JSON
+fi
+```
+
+Then `chmod +x ~/.claude/hooks/skeleton-nudge.sh` and register it in `~/.claude/settings.json` (user-level) or `.claude/settings.json` (per-project) — see [`hooks/claude/settings.snippet.json`](hooks/claude/settings.snippet.json):
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "~/.claude/hooks/skeleton-nudge.sh", "timeout": 5 } ] }
+    ]
+  }
+}
+```
+
+### Cursor (rule — the hook-equivalent)
+
+Cursor's prompt hook (`beforeSubmitPrompt`) is **informational only** — it can't inject instructions back into the agent, so a hook can't nudge behavior here. The Cursor-native way to make this automatic is a **Rule**.
+
+`.cursor/rules/skeleton-plan.mdc` (see [`hooks/cursor/skeleton-plan.mdc`](hooks/cursor/skeleton-plan.mdc)):
+
+```markdown
+---
+description: For change/precision tasks, lead with a code skeleton (file tree + typed signatures) before writing implementation.
+alwaysApply: false
+---
+
+When asked to plan, propose, or implement changes, first use the skeleton-plan skill:
+present a file-tree diff (new/modified/deleted) plus typed signatures and docstrings
+of the functions/classes you'll add or change — edits tagged with before->after
+signatures, bodies left as stubs. Only write full implementations after the skeleton
+is acknowledged. For larger plans, embed it as an inline "## Skeleton" section.
+```
+
+Set `alwaysApply: true` to attach it to every request, or keep it `false` and let the description pull it in for relevant tasks. Drop it in `.cursor/rules/` (per-project) or your global rules.
+
+## License
+
+MIT
