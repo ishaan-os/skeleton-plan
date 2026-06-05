@@ -19,7 +19,7 @@ The precise implementation is deliberately omitted — bodies are stubs. The del
 
 | Trigger | Behavior |
 |---|---|
-| **Standalone** — user drops `/skeleton-plan <ask>` in a request | Investigate, then write a self-contained markdown file (see *Output*), restate its path, and offer plannotator review. |
+| **Standalone** — user drops `/skeleton-plan <ask>` in a request | Investigate, then write a self-contained markdown file (see *Output*) and restate its path so the user can open or review it. |
 | **Inside a larger plan** — user mentions `/skeleton-plan` while you're drafting a plan-mode plan | Do NOT write a separate file. Embed the skeleton as an inline `## Skeleton` section in the single plan markdown you're already producing, using the same format below. |
 
 ## Fidelity levels
@@ -32,9 +32,9 @@ Default to **lean**. Bump only when asked.
 ## Workflow
 
 1. **Scope the ask.** Identify which files are touched: new, modified, deleted, moved. If the ask is vague about scope, state your assumption in one line and proceed (don't stall).
-2. **Investigate.** Read the real files you'll modify. For modified files, note the *current* signature of anything you'll change. Match the repo's conventions (in this repo: the `routes/ → handlers/ → crud/`, `schemas/`, `models/`, `providers/`, `actors/`, `temporal/` layering).
+2. **Investigate.** Read the real files you'll modify. For modified files, note the *current* signature of anything you'll change. Match the repo's existing conventions — its directory layout, layering, and naming — and place new code where analogous code already lives.
 3. **Write the skeleton** in the structure below.
-4. **Standalone only:** write the file, restate the path, offer (don't auto-run) `plannotator annotate <path>`.
+4. **Standalone only:** write the file and restate its path so the user can open or review it.
 
 ## Output structure
 
@@ -146,7 +146,7 @@ In **logic mode**, each `...` body is preceded by numbered steps, e.g.:
 
 ## File location (standalone)
 
-Default: `~/.claude/skeleton-plans/<YYYY-MM-DD>/<slug>.md` (home-dir, dated, never pollutes the repo). Create the dated directory if needed (`mkdir -p`), derive `<slug>` from the objective. This default is v1 and easy to change later.
+Default: `~/.skeleton-plans/<YYYY-MM-DD>/<slug>.md` (home-dir, dated, harness-agnostic, never pollutes the repo). Create the dated directory if needed (`mkdir -p`), derive `<slug>` from the objective. This is just a default — change it to wherever you keep working notes.
 
 ## Common mistakes
 

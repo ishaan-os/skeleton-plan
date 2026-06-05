@@ -68,7 +68,7 @@ ln -s "$PWD/skeleton-plan/skills/skeleton-plan" ~/.claude/skills/skeleton-plan
 /skeleton-plan add partial refunds to the orders flow
 ```
 
-It investigates, writes `~/.claude/skeleton-plans/<date>/<slug>.md`, restates the path, and offers to open it in plannotator.
+It investigates, writes the skeleton to `~/.skeleton-plans/<date>/<slug>.md`, and restates the path so you can open or review it.
 
 **With logic steps** — when you want to verify the algorithm, not just the contract:
 

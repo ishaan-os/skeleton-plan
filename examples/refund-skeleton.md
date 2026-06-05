@@ -90,5 +90,5 @@ async def refund_order(order_id: UUID, body: RefundRequest) -> RefundResult:
 ```
 
 ## Assumptions
-- Refund is synchronous (inline Stripe call), not queued via a Dramatiq actor.
+- Refund is synchronous (inline Stripe call), not queued via a background worker.
 - Partial refunds allowed; over-refunding is rejected in `process_refund`, not at the route layer.
