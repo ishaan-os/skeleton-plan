@@ -12,7 +12,7 @@ It's most useful in two places: small tasks that don't warrant full plan mode bu
 
 ## What it produces
 
-A single markdown file (or an inline `## Skeleton` section inside a bigger plan):
+Rendered **right in the chat reply by default** — or written to a markdown file, or embedded as an inline `## Skeleton` section in a bigger plan. Same structure either way:
 
 1. **File tree** — every path touched, marked `+` new / `~` modified / `-` deleted / `>` moved.
 2. **Per-file skeletons** — for new files, full typed signatures + docstrings; for modified files, **only the changed members**, tagged `# [NEW]`/`# [MODIFIED]`, with a `# was:` line showing the old signature when it changes. Everything untouched is elided.
@@ -25,7 +25,7 @@ Two fidelity levels:
 | **Default** | `...` (signature + docstring only) | `/skeleton-plan <ask>` |
 | **Logic** | `...` preceded by numbered comment steps sketching the algorithm | `/skeleton-plan --logic <ask>` (or "with logic" / "verbose") |
 
-It **investigates the real codebase first** — every signature, import, and symbol is read from the actual files, not invented — and it **never edits source files**. The output is a doc.
+It **investigates the real codebase first** — every signature, import, and symbol is read from the actual files, not invented — and it **never edits source files**. It outputs *only* the skeleton: no preamble, no recap, no per-file prose. The structure is the message.
 
 ## Install
 
@@ -62,13 +62,21 @@ ln -s "$PWD/skeleton-plan/skills/skeleton-plan" ~/.claude/skills/skeleton-plan
 
 ## Using it
 
-**Mid-chat, standalone** — the common case. Drop it into any request:
+**In chat (default)** — the common case. Drop it into any request:
 
 ```
 /skeleton-plan add partial refunds to the orders flow
 ```
 
-It investigates, writes the skeleton to `~/.skeleton-plans/<date>/<slug>.md`, and restates the path so you can open or review it.
+It investigates the real code and renders the skeleton **right in the reply** — file tree + signatures, nothing else. No file written, no prose to wade through.
+
+**Save it to a file** — when you want a persistent, reviewable artifact, or the change spans many files and a long chat reply gets unwieldy:
+
+```
+/skeleton-plan --file add partial refunds to the orders flow
+```
+
+It writes `~/.skeleton-plans/<date>/<slug>.md` and restates the path.
 
 **With logic steps** — when you want to verify the algorithm, not just the contract:
 

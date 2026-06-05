@@ -15,12 +15,17 @@ The precise implementation is deliberately omitted — bodies are stubs. The del
 
 **Never edit real source files.** This skill produces a documentation artifact only. No stub files in the repo tree, no `git` changes to source.
 
-## Two entry points, one format
+## How to deliver it
 
-| Trigger | Behavior |
+Same format (below) in every case — only the destination differs. **Default to rendering in chat.**
+
+| Context | Where the skeleton goes |
 |---|---|
-| **Standalone** — user drops `/skeleton-plan <ask>` in a request | Investigate, then write a self-contained markdown file (see *Output*) and restate its path so the user can open or review it. |
-| **Inside a larger plan** — user mentions `/skeleton-plan` while you're drafting a plan-mode plan | Do NOT write a separate file. Embed the skeleton as an inline `## Skeleton` section in the single plan markdown you're already producing, using the same format below. |
+| **In chat (default)** — user drops `/skeleton-plan <ask>` in a request | Render the skeleton **directly in your reply**. Do not write a file. |
+| **To a file** — user asks to save it (`--file`, "save it", "write it out"), or the skeleton spans many files where a navigable doc beats a long chat reply | Write a self-contained markdown file (see *File location*) and restate its path. Don't also paste the whole skeleton into chat. |
+| **Inside a larger plan** — user mentions `/skeleton-plan` while you're drafting a plan-mode plan | Embed the skeleton as an inline `## Skeleton` section in the single plan markdown you're already producing. No separate file. |
+
+**No prose padding — this is the point of the skill.** Whatever the destination, output *only* the skeleton: the one-line objective, the file tree, the per-file blocks, and the assumptions footer. No preamble, no recap of the ask, no "here's my plan" narrative, no per-file explanation outside the code. The structure carries the meaning; spend tokens on the skeleton, not on describing it.
 
 ## Fidelity levels
 
@@ -34,7 +39,7 @@ Default to **lean**. Bump only when asked.
 1. **Scope the ask.** Identify which files are touched: new, modified, deleted, moved. If the ask is vague about scope, state your assumption in one line and proceed (don't stall).
 2. **Investigate.** Read the real files you'll modify. For modified files, note the *current* signature of anything you'll change. Match the repo's existing conventions — its directory layout, layering, and naming — and place new code where analogous code already lives.
 3. **Write the skeleton** in the structure below.
-4. **Standalone only:** write the file and restate its path so the user can open or review it.
+4. **Deliver it** per the destination rules above: render in chat by default (skeleton only, no prose), write a file only when asked or when it spans many files, or embed it as a `## Skeleton` section inside a larger plan.
 
 ## Output structure
 
@@ -144,9 +149,9 @@ In **logic mode**, each `...` body is preceded by numbered steps, e.g.:
     ...
 ```
 
-## File location (standalone)
+## File location (file mode only)
 
-Default: `~/.skeleton-plans/<YYYY-MM-DD>/<slug>.md` (home-dir, dated, harness-agnostic, never pollutes the repo). Create the dated directory if needed (`mkdir -p`), derive `<slug>` from the objective. This is just a default — change it to wherever you keep working notes.
+Only when writing to a file. Default: `~/.skeleton-plans/<YYYY-MM-DD>/<slug>.md` (home-dir, dated, harness-agnostic, never pollutes the repo). Create the dated directory if needed (`mkdir -p`), derive `<slug>` from the objective. This is just a default — change it to wherever you keep working notes.
 
 ## Common mistakes
 
