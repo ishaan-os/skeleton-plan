@@ -1,0 +1,12 @@
+{
+  "name": "skeleton-plan",
+  "version": "0.1.0",
+  "description": "A code skeleton for your plans: file-tree diff + typed signatures, docstrings, and tagged edits instead of a wall of prose.",
+  "author": {
+    "name": "Ishaan Nagpal"
+  },
+  "homepage": "https://github.com/ishaan-os/skeleton-plan",
+  "repository": "https://github.com/ishaan-os/skeleton-plan",
+  "license": "MIT",
+  "keywords": ["plan", "skeleton", "code-review", "planning", "scaffold", "signatures", "diff"]
+}

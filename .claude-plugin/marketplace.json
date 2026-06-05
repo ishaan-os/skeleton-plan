@@ -1,0 +1,13 @@
+{
+  "name": "skeleton-plan",
+  "owner": {
+    "name": "Ishaan Nagpal"
+  },
+  "plugins": [
+    {
+      "name": "skeleton-plan",
+      "source": "./",
+      "description": "A code skeleton for your plans: file-tree diff + typed signatures, docstrings, and tagged edits instead of a wall of prose."
+    }
+  ]
+}

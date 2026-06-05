@@ -6,9 +6,9 @@ A Claude Code / Cursor skill that turns "what are you about to change?" into a *
 
 - Plans came back formatted a dozen different ways depending on the model and harness, and reading all of it was its own tax.
 - "Reasonable-looking" plans kept turning into over-engineered diffs — assumptions I never agreed to, surfacing only at PR time.
-- Mermaid diagrams are great for *logic*. But what I actually wanted to approve was the **structure**: which functions you're adding or changing, your thinking expressed in types and steps, your logic visible in comments. The exact execution isn't the point — the skeleton is.
+- Mermaid diagrams are great for *logic*. But what I actually wanted to approve was the **structure**: which functions the agent is adding or changing, the agent's thinking expressed in types and steps, the agent's logic visible in comments. The exact execution isn't the point — the skeleton is.
 
-It's most useful in two places: small tasks that don't warrant full plan mode but still need precision (touch the *right* things), and large plans where you want a digestible preview *before* it's a 5k-line PR.
+It's most useful in two places: small tasks that don't warrant full plan mode but still need precision — touching the *right* things, especially critical code paths — and large plans where you want a digestible preview of the core sections before it's a 5k-line PR.
 
 ## What it produces
 
@@ -29,17 +29,36 @@ It **investigates the real codebase first** — every signature, import, and sym
 
 ## Install
 
-Clone into your skills directory (the folder name becomes the skill name):
+### Claude Code — as a plugin (recommended)
 
-```bash
-# Claude Code
-git clone https://github.com/ishaan-os/skeleton-plan ~/.claude/skills/skeleton-plan
-
-# Cursor (auto-symlinks into ~/.claude/skills on most setups)
-git clone https://github.com/ishaan-os/skeleton-plan ~/.cursor/skills/skeleton-plan
+```text
+/plugin marketplace add ishaan-os/skeleton-plan
+/plugin install skeleton-plan@skeleton-plan
 ```
 
-Update later with `git -C ~/.claude/skills/skeleton-plan pull`.
+That's it. Plugin skills are namespaced, so invoke it as `/skeleton-plan:skeleton-plan …` — or just ask in natural language ("skeleton-plan this change") and it triggers automatically. Update later with `/plugin marketplace update skeleton-plan`.
+
+> The plugin ships the skill only. It does **not** auto-enable the prompt hook below — that stays opt-in (see [Stitching it in as a hook](#stitching-it-in-as-a-hook)).
+
+### Cursor — as a skill
+
+Cursor doesn't use Claude Code plugins; point it at the skill directory directly:
+
+```bash
+git clone https://github.com/ishaan-os/skeleton-plan
+ln -s "$PWD/skeleton-plan/skills/skeleton-plan" ~/.cursor/skills/skeleton-plan
+```
+
+Then invoke it as `/skeleton-plan`. (Update later with `git -C skeleton-plan pull`.)
+
+### Claude Code — manual skill (no plugin)
+
+Prefer a bare `/skeleton-plan` over the namespaced plugin form? Symlink the skill instead of installing the plugin:
+
+```bash
+git clone https://github.com/ishaan-os/skeleton-plan
+ln -s "$PWD/skeleton-plan/skills/skeleton-plan" ~/.claude/skills/skeleton-plan
+```
 
 ## Using it
 
