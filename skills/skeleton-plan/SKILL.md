@@ -32,7 +32,7 @@ Same format (below) in every case — only the destination differs. **Default to
 Default to **lean**. Bump only when asked.
 
 - **Default — docstring only.** Each member: typed signature + a full docstring (purpose, args, returns, raises). Body is `...`. Nothing else.
-- **Logic mode** — triggered by `--logic`, "with logic", "verbose", or "sketch the logic". Same as default, plus **numbered comment steps** inside each body sketching the algorithm and key branch / error points. Still no real expressions — comments only.
+- **Logic mode** — triggered by `--logic`, "with logic", "verbose", or "sketch the logic". Same as default, plus **numbered comment steps** inside each body sketching the algorithm and key branch / error points. Still no real expressions — comments only. Reach for this on **critical paths** — money, auth, concurrency, idempotency — where the *order of the guards* is the thing under review, not the signature (e.g. lock before re-check, guard the one non-idempotent side effect, persist atomically). The steps make that ordering reviewable before any code exists.
 
 ## Workflow
 

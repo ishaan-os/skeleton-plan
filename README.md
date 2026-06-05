@@ -136,6 +136,39 @@ async def refund_order(order_id: UUID, body: RefundRequest) -> RefundResult:
 
 **Why it helps:** the `# was:` line flags the signature change at a glance; the `+`/`~`/`-` tree shows blast radius in four lines; and the docstrings let you sanity-check intent without reading any implementation. A full sample artifact lives in [`examples/refund-skeleton.md`](examples/refund-skeleton.md).
 
+## Logic mode — for critical paths
+
+On a critical path — money, auth, concurrency, idempotency — the signature isn't the risky part. The **order of the guards** is. Default fidelity shows you *that* a function captures a payment; `--logic` shows you *how*, as numbered comment steps you can approve or reject before a line of it exists:
+
+````markdown
+## app/handlers/capture.py  (NEW)
+```python
+async def capture_payment(
+    payment_id: UUID, idempotency_key: str, session: AsyncSession,
+) -> CaptureResult:
+    """Capture an authorized payment exactly once.
+
+    Safe under concurrent retries: a given idempotency_key yields the
+    same result and never double-charges.
+    """
+    # 1. Look up idempotency_key; if a record exists, return its stored
+    #    result immediately — do NOT touch the provider again.
+    # 2. SELECT ... FOR UPDATE the payment row so concurrent captures
+    #    of the same payment serialize here.
+    # 3. Re-check state UNDER the lock: already captured -> return that;
+    #    voided/expired -> raise PaymentNotCapturable.
+    # 4. provider.capture(...) — the ONLY non-idempotent side effect;
+    #    everything above exists to guard this one line.
+    # 5. Persist captured state + idempotency record in the SAME
+    #    transaction, then commit (atomic: no orphan charge).
+    # 6. On ProviderError: record a terminal attempt and raise —
+    #    never silently retry an unknown provider outcome.
+    ...
+```
+````
+
+That double-charge guard, the lock *before* the re-check, the atomic persist, the no-blind-retry rule — those are the review. None of them are visible from the signature, and you'd otherwise only catch a missing one in the PR (or in production). Full artifact: [`examples/logic-mode-payment-capture.md`](examples/logic-mode-payment-capture.md).
+
 ## Stitching it in as a hook
 
 You can make the skeleton a default reflex instead of something you remember to type.
